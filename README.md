@@ -20,3 +20,6 @@ Once the simulated population was generated and converted into a dataframe, furt
   - Identifying the most significant variables (those with highest statistical significance, e.g. ***).
   - Creating a second linear model including only these significant predictors.
   - Investigating scientific literature on relevant risk factors and associated conditions.
+
+
+If you feel confident, try to 'crack' and find out the disease hidden in the population! (simulated_population.csv into the .ZIP file) Good luck! ;)

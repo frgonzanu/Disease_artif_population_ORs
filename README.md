@@ -7,3 +7,16 @@ Using these variables, a personalized probability of developing the disease is c
   - Generating synthetic data for training and validating predictive models in contexts where real data are scarce or sensitive.
 
 The approach combines stochastic data generation with conditional logic and risk formulas extracted from scientific evidence, providing a controlled environment for exploratory analysis, simulations, or even educational purposes.
+
+____________________________________________________________________
+
+To develop this project, we first researched environmental and genetic risk factors for a specific disease and compiled the data into a structured database (see TABLE.xlsx). Using this information, we built a model based on the Odds Ratios (ORs) of each risk factor. This model was then used to calculate the probability of disease for each individual, based on personal attributes such as age, sex, genetics, smoking status, etc. Finally, we simulated whether each individual developed the disease or not.
+
+____________________________________________________________________
+
+Once the simulated population was generated and converted into a dataframe, further analysis could be performed to explore the disease outcome. A suggested workflow includes:
+
+  - Building a linear model using the full dataset.
+  - Identifying the most significant variables (those with highest statistical significance, e.g. ***).
+  - Creating a second linear model including only these significant predictors.
+  - Investigating scientific literature on relevant risk factors and associated conditions.

@@ -1,0 +1,29 @@
+🔹 Odds Ratio (OR)
+The odds ratio (OR) is a measure that compares the likelihood of an event (e.g., developing a disease) between two groups: the exposed (e.g., smokers) and the non-exposed.
+
+An OR > 1 indicates increased risk in the exposed group.
+
+An OR < 1 suggests a protective effect.
+
+
+🔹 What is beta (β)?
+Beta (β) is the coefficient in a logistic regression model. It quantifies how much the log-odds of the event (e.g., disease) changes with each unit change in a predictor variable (such as age, sex, exposure, etc.).
+
+
+🔹 Relationship between OR and beta (β)
+In logistic regression models, there's a direct relationship between the coefficient beta (β) and the odds ratio:
+
+OR = e^(𝛽) <=> 𝛽 = ln(OR)
+
+This means that β represents the effect of a variable on the logarithm of the odds of the event.
+
+🔹 Use in building a probability equation
+In biomedical models, beta coefficients are used to construct an equation that estimates the probability of an event (like developing a disease):
+
+log(p/(1-p)) = 𝛽_0 + 𝛽_1 x X_1 + 𝛽_2 x X_2 ... + 𝛽_n x X_n
+ 
+Solving for probability:
+
+𝑝 = 1 / ( 1 + e^( 𝛽_0 + 𝛽_1 x X_1 + 𝛽_2 x X_2 ... + 𝛽_n x X_n )
+ 
+This formula enables individual risk prediction based on personal characteristics such as habits, age, or genetics — highly useful in epidemiology, personalized medicine, and public health.

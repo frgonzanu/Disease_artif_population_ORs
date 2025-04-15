@@ -1,0 +1,308 @@
+### R Markdown: Simulating an Artificial Population Based on Epidemiological Data
+
+```{r setup, include=FALSE}
+library(readxl)
+```
+
+### 1. Load the Reference Data
+We start by importing a table with probabilities and distributions of various factors by nationality.
+
+```{r load-data}
+d <- as.data.frame(read_excel("C:/Users/pacog/Documents/Estudios/Master/TABLE_final.xlsx"))
+row.names(d) <- d$Country
+N <- 100000  # Number of individuals to simulate
+```
+
+### 2. Define Age-dependent Probability Functions
+These logistic and linear functions model how probability of certain conditions changes with age.
+
+```{r define-functions}
+menopa <- function(Age) {
+  (exp(-45 + 0.87 * Age)) / (1 + exp(-45 + 0.87 * Age))
+}
+
+sedentary <- function(Age) {
+  (exp(-48 + 0.882 * Age)) / (1 + exp(-48 + 0.882 * Age))
+}
+
+constipation <- function(Age) {
+  0.0034 * Age
+}
+```
+
+### 3. Simulate the Base DataFrame
+We begin populating the synthetic dataset starting with nationality, age, and sex.
+
+```{r simulate-base}
+bdf <- data.frame(Country = factor(sample(d$Country, N, replace = TRUE, 
+                                          prob = d$`Population (percent)`)))
+
+# Assign Age based on country-specific normal distribution
+bdf$Age <- unlist(sapply(bdf$Country, function(Country) 
+  as.integer(rnorm(1, d[Country, "MeanAge"], 7))))
+
+# Assign Sex
+bdf$sex <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("M","F"), 1, replace = TRUE, prob = c(d[Country, "MenProb"], 1 - d[Country, "MenProb"]))))
+```
+
+### 4. Add Lifestyle, Genetic, and Clinical Factors
+Each factor is generated using probabilistic sampling based on country-level prevalence data or functions.
+
+```{r generate-variables}
+bdf$Afro <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "AfroProb"], 1 - d[Country, "AfroProb"]))))
+
+bdf$Red_hair <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "Red_hair"], 1 - d[Country, "Red_hair"]))))
+
+bdf$Smoking <- factor(sapply(bdf$Age, function(Age) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(Age/150, 1 - Age/150))))
+
+bdf$Plastic_surgery <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "Plastic surgery"], 1 - d[Country, "Plastic surgery"]))))
+
+bdf$Number_ofChildren <- unlist(sapply(bdf$Country, function(Country) 
+  as.integer(rnorm(1, d[Country, "AvrNr_children"], 0.5))))
+
+bdf$Age_when_1stChild_wasBorn <- unlist(sapply(bdf$Country, function(Country) 
+  as.integer(rnorm(1, d[Country, "Age_when_1stChild"], 2))))
+bdf$Age_when_1stChild_wasBorn[bdf$Number_ofChildren == 0] <- NA
+
+bdf$OralAnti <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "Oral anticonceptives"], 1 - d[Country, "Oral anticonceptives"]))))
+bdf$OralAnti[bdf$sex == "M"] <- "N"
+
+bdf$Menop <- factor(sapply(bdf$Age, function(Age) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(menopa(Age), 1 - menopa(Age)))))
+bdf$Menop[bdf$sex == "M"] <- "N"
+
+bdf$CoffeeCups <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("0", "1", "2", ">=3"), 1, replace = TRUE, prob = c(
+    1 - d[Country, "1 coffee cup/day"] - d[Country, "2 coffe cup/day"] - d[Country, ">=3 coffee cup/day"],
+    d[Country, "1 coffee cup/day"], d[Country, "2 coffe cup/day"], d[Country, ">=3 coffee cup/day"]))))
+
+bdf$fish <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "Fish Consumption"], 1 - d[Country, "Fish Consumption"]))))
+
+bdf$OftenSoftDrink <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(d[Country, "Often Soft drinks intake"], 1 - d[Country, "Often Soft drinks intake"]))))
+
+bdf$Fruit_VegetIntake <- factor(sapply(bdf$Country, function(Country) 
+  sample(c("Daily", "Often", "Rarely"), 1, replace = TRUE, prob = c(
+    d[Country, "Daily fruit/vegetable intake"], d[Country, "Often fruit/vegetables intake"],
+    d[Country, "Rarely fruit/vegetable intake"]))))
+```
+
+### 5. Generating Additional Variables Based on Country
+
+```
+# Number of airplane flights per year
+bdf$Airplane <- unlist(sapply(bdf$Country, function(Country) as.integer(rpois(1, d[Country,"Airplane flights (year)"]), 6)))
+
+# Pays with cash (no card)
+bdf$PaysWithCash <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"cash_vs_card"], 1 - d[Country,"cash_vs_card"]))))
+
+# Epilepsy
+bdf$Epilepsy <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Epilepsy"], 1 - d[Country,"Epilepsy"]))))
+
+# Traveled to tropical areas in the last year
+bdf$TropicalLands <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Travel to tropical lands"], 1 - d[Country,"Travel to tropical lands"]))))
+
+# Sun exposure
+bdf$SunExposition <- factor(sapply(bdf$Country, function(Country) sample(c("Rarely", "Often"), 1, prob = c(d[Country,"Exposition to sun"], 1 - d[Country,"Exposition to sun"]))))
+
+# Beach baths
+bdf$BeachBaths <- factor(sapply(bdf$Country, function(Country) sample(c("Never", "Rarely", "Often"), 1, prob = c(d[Country,"Beach baths (Never)"], d[Country,"Beach baths (Rarely)"], d[Country,"Beach baths (Often)"]))))
+
+# Car user
+bdf$CarUser <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Car user"], 1 - d[Country,"Car user"]))))
+
+# Muscle pain
+bdf$MusclePain <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Muscle pain"], 1 - d[Country,"Muscle pain"]))))
+
+# Sexually transmitted disease (STD)
+bdf$STD <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"STD"], 1 - d[Country,"STD"]))))
+
+# Exposure to EM radiation last year
+bdf$EMRadiation <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"EM radiation"], 1 - d[Country,"EM radiation"]))))
+
+# Works at night
+bdf$NightWork <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Works at night"], 1 - d[Country,"Works at night"]))))
+
+# Hours of videogames per week
+bdf$Videogames <- unlist(sapply(bdf$Country, function(Country) round(rpois(1, d[Country,"Hours videogames (week)"]), 3)))
+
+# Using headphones
+bdf$UseHeadphones <- factor(sapply(bdf$Country, function(Country) sample(c("Never", "Rarely", "Often"), 1, prob = c(d[Country,"Headphones-Never"], d[Country,"Headphones-Rarely"], d[Country,"Headphones-Often"]))))
+
+# Plants at home
+bdf$Plants <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Plants"], 1 - d[Country,"Plants"]))))
+
+# Cannabis consumption (Never, Rarely, Often)
+bdf$Cannabis <- factor(sapply(bdf$Country, function(Country) sample(c("Never", "Rarely", "Often"), 1, prob = c(d[Country,"Cannabis-Never"], d[Country,"Cannabis-Rarely"], d[Country,"Cannabis-Often"]))))
+
+# Depression
+bdf$Depression <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Depression"], 1 - d[Country,"Depression"]))))
+
+# Bachelor's degree studies
+bdf$BachelorStudies <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Bachelor studies"], 1 - d[Country,"Bachelor studies"]))))
+
+# Pet ownership
+bdf$PetOwner <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Pet owner"], 1 - d[Country,"Pet owner"]))))
+
+# Dogs or cats?
+bdf$DogOrCat <- factor(sapply(bdf$Country, function(Country) sample(c("DOG", "CAT", "other"), 1, prob = c(d[Country,"Dogs_or_cats"], 0.5*d[Country,"Dogs_or_cats"], 1 - 1.5*d[Country,"Dogs_or_cats"]))))
+
+# If no pet, set the value as NA for DogOrCat
+bdf$DogOrCat[bdf$PetOwner == "N"] <- as.factor("NA")
+
+# Any allergies
+bdf$Allergy <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Allergies"], 1 - d[Country,"Allergies"]))))
+
+# Plays any musical instrument
+bdf$PlaysAnyInstrument <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Instrument player"], 1 - d[Country,"Instrument player"]))))
+
+# Single or divorced
+bdf$Single_or_Divorced <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Being single"], 1 - d[Country,"Being single"]))))
+
+# Gambling games
+bdf$Gambling <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Gambling games"], 1 - d[Country,"Gambling games"]))))
+
+# Swollen hands
+bdf$SwollenHands <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Swollen hand"], 1 - d[Country,"Swollen hand"]))))
+
+# Time spent in prison
+bdf$AnytimePrison <- factor(sapply(bdf$Country, function(Country) sample(c("Y", "N"), 1, prob = c(d[Country,"Anytime in prison"], 1 - d[Country,"Anytime in prison"]))))
+
+# Vacation preference (Beach or Mountain)
+bdf$Vacation <- factor(sapply(bdf$Country, function(Country) sample(c("Beach", "Mountain"), 1, prob = c(d[Country,"Vacation"], 1 - d[Country,"Vacation"]))))
+```
+
+```
+# Display the head and summary of the data
+head(bdf)
+summary(bdf)
+```
+
+
+### 6. Disease Probability Assignment Function
+
+
+```
+prob_disease <- function(age, smo, sex, afro, oranticon, coff, fish, frvegint, diab, polyps, menop, obes, rmeat, calc, ibd, seden, const, frel, genscore) {
+  # Predefined log-odds ratios for different factors
+  wmnOR <- -5.4 # Female baseline odds ratio
+  mnOR <- 0.4   # Male baseline odds ratio
+  mnAfroOR <- log(c(1.17, 1.16, 1.38)) #50-54,55-59,60-64
+  wmnAfroOR <- log(c(1.23, 1.51, 1.35))
+  polypOR <- log(2.8)
+  oldOR <- log(2.6)
+  coffOR <- log(c(1,0.88, 0.9, 0.78))
+  oranticonOR <- log(0.89)
+  menopOR <- log(0.67)
+  fishOR <- log(0.89)
+  obesOR <- log(4.3) #4.3 obessity - 1 normal
+  frvegOR <- log(c(1,1.72,2.08)) #20.8 ...
+  DiabOR<- log(0.35)
+  RedMeatOR <- log(c(1, 3.76, 9.35)) #0-1, 2-3, 4+
+  SmokingOR <- log(1.5)
+  calciumOR <- log(c(1, 0.98, 0.88))
+  relativesOR <- log(4.9)
+  IBDOR <- log(2.5)
+  SedentaryOR <- log(1.94)
+  ConstipationOR <- log(c(1, 0.79, 1.33, 5.6))
+  GeneticScoreOR <- log(c(1, 1.63, 2.87))  
+
+
+  # Calculating individual odds based on the patient’s characteristics
+  manwomAFRO <- (sex == "M") * ((age >= 50 & age < 55) * mnAfroOR[1] + (age >= 55 & age < 60) * mnAfroOR[2] + (age >= 60 & age < 64) * mnAfroOR[3]) +
+                (sex == "F") * ((age >= 50 & age <= 50) * wmnAfroOR[1] + (age >= 55 & age < 60) * wmnAfroOR[2] + (age >= 60 & age <= 64) * wmnAfroOR[3])
+  
+  coffeint <- (coff=="0")*coffOR[1] + (coff=="1")*coffOR[2] + (coff=="2")*coffOR[3] + (coff==">=3")*coffOR[4]
+  
+  fruitveg <- (frvegint=="Daily")*frvegOR[1]+(frvegint=="Often")*frvegOR[2]+(frvegint=="Rarely")*frvegOR[3]  
+  
+  ReadMeat <- (rmeat=="0-1")*RedMeatOR[1] + (rmeat=="2-3")*RedMeatOR[2] + (rmeat=="4+")*RedMeatOR[3]
+  
+  Calcium <- (calc<=570)*calciumOR[1] + (calc>570 & calc<1170)*calciumOR[2] + (calc>=1170)*calciumOR[3]
+  
+  Constip <- (const=="Never")*ConstipationOR[1] + (const=="Rarely")*ConstipationOR[2] + (const=="Once a Month")*ConstipationOR[3] + (const=="Every Week")*ConstipationOR[4]
+  
+   GenScore <- (genscore<=11)*GeneticScoreOR[1] + (genscore>11 & genscore<17)*GeneticScoreOR[2] + (genscore>=17)*GeneticScoreOR[3]
+  
+  # The equation for final risk score calculation
+  eq <- wmnOR + (sex=="M")*mnOR + (polyps=="Y")*polypOR + (age >= 50)*oldOR + coffeint + (oranticon=="Y")*oranticonOR +
+          (menop=="Y")*menopOR + (fish=="Y")*fishOR + (obes=="Y")*obesOR + fruitveg + (diab=="Y")*DiabOR + (smo=="Y")*SmokingOR + 
+          manwomAFRO + ReadMeat + Calcium + (frel=="Y")*relativesOR + (ibd=="Y")*IBDOR + (seden=="Y")*SedentaryOR + Constip + GenScore
+
+  prob <- exp(eq) / (1 + exp(eq))  # Logistic regression formula
+  
+  return(prob)
+}
+```
+
+### 7. Calculate the probability of each individual of having the disease
+
+```
+# Assign the probability of disease to each individual in the dataframe
+bdf$Probability <- sapply(seq(nrow(bdf)), function(idx) {
+  # Calculate the probability for each individual based on their factors
+  prob <- prob_disease(
+    bdf[idx,]$Age,
+    bdf[idx,]$Smoking,
+    bdf[idx,]$sex,
+    bdf[idx,]$Afro,
+    bdf[idx,]$OralAnti,
+    bdf[idx,]$CoffeeCups,
+    bdf[idx,]$fish,
+    bdf[idx,]$Fruit_VegetIntake,
+    bdf[idx,]$Diabetes,
+    bdf[idx,]$BowelPolyps,
+    bdf[idx,]$Menop,
+    bdf[idx,]$Obesity,
+    bdf[idx,]$RedMeat_WeeklyIntake,
+    bdf[idx,]$DailyCalciumIntake,
+    bdf[idx,]$IBD,
+    bdf[idx,]$Sedentary,
+    bdf[idx,]$Constipated,
+    bdf[idx,]$RelativesDiagnosis,
+    bdf[idx,]$GeneticScore
+  )
+  return(prob) # Return the calculated probability for each individual
+})
+
+```
+
+### 8. Assigning Disease Status Based on Probability
+
+```
+# Assign the disease status ("Y" or "N") based on the calculated probability
+bdf$Disease <- as.factor(sapply(seq(nrow(bdf)), function(idx) {
+  # Calculate the probability for each individual again
+  p <- prob_disease(
+    bdf[idx,]$Age,
+    bdf[idx,]$Smoking,
+    bdf[idx,]$sex,
+    bdf[idx,]$Afro,
+    bdf[idx,]$OralAnti,
+    bdf[idx,]$CoffeeCups,
+    bdf[idx,]$fish,
+    bdf[idx,]$Fruit_VegetIntake,
+    bdf[idx,]$Diabetes,
+    bdf[idx,]$BowelPolyps,
+    bdf[idx,]$Menop,
+    bdf[idx,]$Obesity,
+    bdf[idx,]$RedMeat_WeeklyIntake,
+    bdf[idx,]$DailyCalciumIntake,
+    bdf[idx,]$IBD,
+    bdf[idx,]$Sedentary,
+    bdf[idx,]$Constipated,
+    bdf[idx,]$RelativesDiagnosis,
+    bdf[idx,]$GeneticScore
+  )
+  
+  # Assign "Y" or "N" based on probability, using `sample` to simulate the disease presence
+  sample(c("Y", "N"), 1, replace = TRUE, prob = c(p, 1 - p)) # Higher p => more likely to have the disease
+}))
+```

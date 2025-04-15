@@ -1,10 +1,10 @@
-### R Markdown: Simulating an Artificial Population Based on Epidemiological Data
+# Simulating an Artificial Population Based on Epidemiological Data
 
 ```{r setup, include=FALSE}
 library(readxl)
 ```
 
-### 1. Load the Reference Data
+## 1. Load the Reference Data
 We start by importing a table with probabilities and distributions of various factors by nationality.
 
 ```{r load-data}
@@ -13,7 +13,7 @@ row.names(d) <- d$Country
 N <- 100000  # Number of individuals to simulate
 ```
 
-### 2. Define Age-dependent Probability Functions
+## 2. Define Age-dependent Probability Functions
 These logistic and linear functions model how probability of certain conditions changes with age.
 
 ```{r define-functions}
@@ -30,7 +30,7 @@ constipation <- function(Age) {
 }
 ```
 
-### 3. Simulate the Base DataFrame
+## 3. Simulate the Base DataFrame
 We begin populating the synthetic dataset starting with nationality, age, and sex.
 
 ```{r simulate-base}
@@ -46,7 +46,7 @@ bdf$sex <- factor(sapply(bdf$Country, function(Country)
   sample(c("M","F"), 1, replace = TRUE, prob = c(d[Country, "MenProb"], 1 - d[Country, "MenProb"]))))
 ```
 
-### 4. Add Lifestyle, Genetic, and Clinical Factors
+## 4. Add Lifestyle, Genetic, and Clinical Factors
 Each factor is generated using probabilistic sampling based on country-level prevalence data or functions.
 
 ```{r generate-variables}
@@ -94,7 +94,7 @@ bdf$Fruit_VegetIntake <- factor(sapply(bdf$Country, function(Country)
     d[Country, "Rarely fruit/vegetable intake"]))))
 ```
 
-### 5. Generating Additional Variables Based on Country
+## 5. Generating Additional Variables Based on Country
 
 ```
 # Number of airplane flights per year
@@ -186,7 +186,7 @@ summary(bdf)
 ```
 
 
-### 6. Disease Probability Assignment Function
+## 6. Disease Probability Assignment Function
 
 
 ```
@@ -242,7 +242,7 @@ prob_disease <- function(age, smo, sex, afro, oranticon, coff, fish, frvegint, d
 }
 ```
 
-### 7. Calculate the probability of each individual of having the disease
+## 7. Calculate the probability of each individual of having the disease
 
 ```
 # Assign the probability of disease to each individual in the dataframe
@@ -274,7 +274,7 @@ bdf$Probability <- sapply(seq(nrow(bdf)), function(idx) {
 
 ```
 
-### 8. Assigning Disease Status Based on Probability
+## 8. Assigning Disease Status Based on Probability
 
 ```
 # Assign the disease status ("Y" or "N") based on the calculated probability

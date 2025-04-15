@@ -8,6 +8,7 @@ Using these variables, a personalized probability of developing the disease is c
 
 The approach combines stochastic data generation with conditional logic and risk formulas extracted from scientific evidence, providing a controlled environment for exploratory analysis, simulations, or even educational purposes.
 
+*Acknowledgement*. This project was developed by a student team within the MSc in Biomedical Engineering program.
 ____________________________________________________________________
 
 To develop this project, we first researched environmental and genetic risk factors for a specific disease and compiled the data into a structured database (see TABLE.xlsx). Using this information, we built a model based on the Odds Ratios (ORs) of each risk factor. This model was then used to calculate the probability of disease for each individual, based on personal attributes such as age, sex, genetics, smoking status, etc. Finally, we simulated whether each individual developed the disease or not.

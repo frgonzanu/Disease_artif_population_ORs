@@ -8,7 +8,7 @@ library(readxl)
 We start by importing a table with probabilities and distributions of various factors by nationality.
 
 ```{r load-data}
-d <- as.data.frame(read_excel("C:/Users/pacog/Documents/Estudios/Master/TABLE_final.xlsx"))
+d <- as.data.frame(read_excel("TABLE_final.xlsx"))
 row.names(d) <- d$Country
 N <- 100000  # Number of individuals to simulate
 ```

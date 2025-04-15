@@ -1,4 +1,4 @@
-# CCancer_population_ORs
+# _Disease_ artificial population
 This project aims to simulate an artificial population of individuals with characteristics defined based on statistics and scientific literature on risk factors associated with a specific disease. Each individual in the synthetic population is assigned a set of variables (such as age, sex, lifestyle habits, clinical markers, etc.) realistically distributed according to known epidemiological data.
 
 Using these variables, a personalized probability of developing the disease is calculated for each individual, based on risk models derived from scientific studies. This allows for:
